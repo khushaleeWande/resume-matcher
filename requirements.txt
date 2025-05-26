@@ -8,5 +8,4 @@ PyPDF2
 pdf2image==1.17.0
 pdfminer.six
 pillow
-fitz
 frontend
