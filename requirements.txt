@@ -1,7 +1,7 @@
 Flask
 gunicorn
 PyMuPDF
-spacy==3.8.4
+spacy==3.7.2
 scikit-learn==1.2.2
 numpy==1.26.4
 PyPDF2
