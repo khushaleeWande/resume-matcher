@@ -6,7 +6,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python -m spacy download en_core_web_trf
-    startCommand:gunicorn appv9:app
+    startCommand: gunicorn appv9:app
     envVars:
       - key: FLASK_ENV
         value: production
