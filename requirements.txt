@@ -9,3 +9,5 @@ pdf2image==1.17.0
 pdfminer.six
 pillow
 frontend
+https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.7.1/en_core_web_trf-3.7.1.tar.gz
+
