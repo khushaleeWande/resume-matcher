@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Resume Dashboard</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    .navbar {
+      z-index: 1000;
+    }
+    .sidebar {
+      position: fixed;
+      top: 56px; /* height of navbar */
+      bottom: 0;
+      left: 0;
+      width: 220px;
+      padding: 1rem 0;
+      background-color: #f8f9fa;
+      overflow-y: auto;
+    }
+    /* Main content area */
+    main {
+      margin-top: 56px;
+      margin-left: 220px;
+      padding: 1rem;
+    }
+    .card {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border: none;
+      border-radius: 0.5rem;
+    }
+    .nav-link {
+      cursor: pointer;
+    }
+    .card-body {
+      position: relative;
+      height: 300px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">📊 Resume Dashboard</a>
+    </div>
+  </nav>
+
+  <nav class="sidebar">
+    <ul class="nav nav-pills flex-column">
+      <li class="nav-item mb-2">
+        <a class="nav-link active" data-bs-toggle="pill" href="#overview">
+          Overview
+        </a>
+      </li>
+      <li class="nav-item mb-2">
+        <a class="nav-link" data-bs-toggle="pill" href="#scores">
+          Scores
+        </a>
+      </li>
+      <li class="nav-item mb-2">
+        <a class="nav-link" data-bs-toggle="pill" href="#details">
+          Details
+        </a>
+      </li>
+      <li class="nav-item mb-2">
+        <a class="nav-link" href="/">
+          Upload Resumes
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="tab-content">
+
+      <div class="tab-pane fade show active" id="overview">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Degree Distribution</div>
+              <div class="card-body">
+                <canvas id="degreeChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Category Breakdown</div>
+              <div class="card-body">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Graduation Years</div>
+              <div class="card-body">
+                <canvas id="gradYearChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Selection Status</div>
+              <div class="card-body">
+                <canvas id="selectionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="scores">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Similarity Scores (Line)</div>
+              <div class="card-body">
+                <canvas id="similarityLineChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Composite vs Similarity (Scatter)</div>
+              <div class="card-body">
+                <canvas id="compositeScatterChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="details">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Top 20 Skills</div>
+              <div class="card-body">
+                <canvas id="skillChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Top 20 Places</div>
+              <div class="card-body">
+                <canvas id="placeChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">Threshold Scores</div>
+              <div class="card-body">
+                <canvas id="thresholdChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const stats = {{ stats | tojson }};
+
+    function makeBar(id, labels, data) {
+      const ctx = document.getElementById(id).getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ data }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend:{ display:false } },
+          scales: {
+            x: { ticks:{ autoSkip:true, maxRotation:0 } },
+            y: { beginAtZero:true }
+          }
+        }
+      });
+    }
+
+    function makeLine(id, labels, data) {
+      const ctx = document.getElementById(id).getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Similarity Score',
+            data,
+            fill: false,
+            tension: 0.3,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title:{ display:true, text:'Candidate #' } },
+            y: { beginAtZero:true, title:{ display:true, text:'Similarity Score' } }
+          }
+        }
+      });
+    }
+
+    function makeScatter(id, xData, yData) {
+      const ctx = document.getElementById(id).getContext('2d');
+      const points = xData.map((x,i)=>({ x, y:yData[i] }));
+      new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets:[{ label:'Composite vs Similarity', data:points, pointRadius:5 }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { type:'linear', title:{ display:true, text:'Similarity Score' } },
+            y: { beginAtZero:true, title:{ display:true, text:'Composite Score' } }
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      makeBar('degreeChart',
+        Object.keys(stats.degree_counts),
+        Object.values(stats.degree_counts)
+      );
+      makeBar('categoryChart',
+        Object.keys(stats.category_counts),
+        Object.values(stats.category_counts)
+      );
+      makeBar('gradYearChart',
+        Object.keys(stats.grad_year_counts),
+        Object.values(stats.grad_year_counts)
+      );
+      makeBar('selectionChart',
+        Object.keys(stats.selection_counts),
+        Object.values(stats.selection_counts)
+      );
+
+      const labels = stats.similarities.map((_,i)=>`#${i+1}`);
+      makeLine('similarityLineChart', labels, stats.similarities);
+      makeScatter('compositeScatterChart', stats.similarities, stats.composites);
+
+      makeBar('skillChart',
+        Object.keys(stats.skill_counts).slice(0,20),
+        Object.values(stats.skill_counts).slice(0,20)
+      );
+      makeBar('placeChart',
+        Object.keys(stats.place_counts).slice(0,20),
+        Object.values(stats.place_counts).slice(0,20)
+      );
+      makeBar('thresholdChart',
+        Object.keys(stats.threshold_counts),
+        Object.values(stats.threshold_counts)
+      );
+    });
+  </script>
+</body>
+</html>

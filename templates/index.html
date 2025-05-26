@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Resume Upload</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- XLSX for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    .navbar {
+      z-index: 1000;
+    }
+    .sidebar {
+      position: fixed;
+      top: 56px; /* height of navbar */
+      bottom: 0;
+      left: 0;
+      width: 220px;
+      padding-top: 1rem;
+      background-color: #343a40;
+      overflow-y: auto;
+    }
+    .sidebar .nav-link {
+      color: #ced4da;
+      margin: .3rem 0;
+    }
+    .sidebar .nav-link.active {
+      background-color: #495057;
+      color: #fff;
+    }
+    main {
+      margin-top: 56px;
+      margin-left: 220px;
+      padding: 1rem;
+    }
+    .card {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border: none;
+      border-radius: 0.5rem;
+    }
+    .card-body {
+      position: relative;
+      height: auto;
+    }
+    .table-responsive {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #343a40;
+      color: #fff;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">📄 Resume Shortlister</a>
+      <div class="ms-auto">
+        <a class="btn btn-outline-light" href="/dashboard">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <ul class="nav flex-column px-2">
+      <li class="nav-item mb-2">
+        <a class="nav-link active" href="/">
+          <i class="bi bi-upload"></i> Upload
+        </a>
+      </li>
+      <li class="nav-item mb-2">
+        <a class="nav-link" href="/dashboard">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <div class="row g-4">
+      <!-- Upload Form -->
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Upload Resumes</h5>
+          </div>
+          <div class="card-body p-4">
+            <form action="/" method="POST" enctype="multipart/form-data">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="job_description" class="form-label">Job Description</label>
+                  <input type="text" class="form-control" id="job_description" name="job_description">
+                </div>
+                <div class="col-md-3">
+                  <label for="threshold_score" class="form-label">Threshold Score</label>
+                  <select class="form-select" id="threshold_score" name="threshold_score">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label for="graduation_year" class="form-label">Graduation Year</label>
+                  <select class="form-select" id="graduation_year" name="graduation_year">
+                    {% for y in [2025,2024,2023,2022,2021] %}
+                    <option value="{{ y }}">{{ y }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="special_skills" class="form-label">Special Skills</label>
+                  <select class="form-select" id="special_skills" name="special_skills">
+                    {% for skill in ['Python','Machine Learning','Data Analysis','Web Development','Cloud Computing'] %}
+                    <option>{{ skill }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="resumes" class="form-label">Select Resumes (PDF)</label>
+                  <input type="file" class="form-control" id="resumes" name="resumes" accept=".pdf" multiple>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary mt-4">Upload</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uploaded Files Table -->
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">Uploaded Resumes</h5>
+          </div>
+          <div class="card-body p-3">
+            <button class="btn btn-success mb-3" onclick="downloadExcel()">Download as Excel</button>
+            <div class="table-responsive">
+              <table class="table table-striped" id="uploaded-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>File Name</th>
+                    <th>Name</th>
+                    <th>Degree</th>
+                    <th>Skills</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>GitHub</th>
+                    <th>LinkedIn</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Selection</th>
+                    <th>Match (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for file in files %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ file.filename }}</td>
+                    <td>{{ file.name }}</td>
+                    <td>{{ file.degree }}</td>
+                    <td>{{ file.special_skills }}</td>
+                    <td>{{ file.email }}</td>
+                    <td>{{ file.phone }}</td>
+                    <td><a href="{{ file.github }}" target="_blank">{{ file.github }}</a></td>
+                    <td><a href="{{ file.linkedin }}" target="_blank">{{ file.linkedin }}</a></td>
+                    <td>{{ file.category }}</td>
+                    <td>{{ file.places }}</td>
+                    <td>{{ file.selection_status }}</td>
+                    <td>{{ file.SIMILARITY|round(2) }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="footer">
+    &copy; 2025 Resume Shortlister. All Rights Reserved.
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function downloadExcel() {
+      const table = document.getElementById("uploaded-table");
+      const wb = XLSX.utils.table_to_book(table, { sheet: "Resumes" });
+      XLSX.writeFile(wb, "Uploaded_Resumes.xlsx");
+    }
+  </script>
+</body>
+</html>
