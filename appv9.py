@@ -15,8 +15,9 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-nlp_model     = spacy.load('resume_ner_model')
-nlp_loc_model = spacy.load('en_core_web_trf')
+nlp_model = spacy.load(os.path.join(os.getcwd(), "resume_ner_model"))
+nlp_loc_model = spacy.load("en_core_web_trf")
+
 
 
 def init_db():
@@ -305,4 +306,5 @@ def view_resumes():
     return render_template('resumes.html', resumes=data)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)

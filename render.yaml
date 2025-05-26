@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: resume-matcher
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      python -m spacy download en_core_web_trf
+    startCommand: python appv9.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
